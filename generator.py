@@ -1,3 +1,4 @@
+from collections import namedtuple
 from jinja2 import Template
 
 # >> > s = "{% for element in elements %}{{loop.index}} {% endfor %}"
@@ -16,25 +17,25 @@ headers = Template("""
 # + Add method ret types
 # Fix map type
 types_decl = Template("""
-class {{name}}(object):
+class {{node.name}}(object):
     \"""
-    {{description}}
+    {{node.description}}
     \"""
-{% for f in fields %}
-    {{ f['name'] }}:{{ f['etype'] }} = {{f.defaultValue or None}}
+{% for f in node.fields %}
+    {{ f.name }}:{{ f.etype }} = {{f.defaultValue or None}}
 {% endfor %}
-{% for f in input_fields %}
+{% for f in node.input_fields %}
     \"""{{f.description}}\"""
-    {{ f['name'] }}:{{ f['etype'] }} = {{f.defaultValue}}
+    {{ f.name }}:{{ f.etype }} = {{f.defaultValue}}
 {% endfor %}
-{% for f in enums %}
+{% for f in node.enums %}
     \"""{{f.description}}\"""
     {{ f.name }} = "{{f.name}}"
 {% endfor %}
-{% for m in methods %}
-    def {{ m['name'] }}({% for a in m['args'] %}{{a.name}}:{{a.etype}}{% if not loop.last %}, {% endif %}{% endfor %}) -> {{m.etype}}:
+{% for m in node.methods %}
+    def {{ m.name }}({% for a in m.args %}{{a.name}}:{{a.etype}}{% if not loop.last %}, {% endif %}{% endfor %}) -> {{m.etype}}:
         \"""
-        {{m['description']}}
+        {{m.description}}
         \"""
 {% endfor %}
 """)
@@ -44,7 +45,7 @@ def know_types(t):
     mapping = {
         'String': 'str',
         'Boolean': 'bool',
-        'Intger': 'int',
+        'Int': 'int',
     }
     return mapping.get(t, t)
 
@@ -88,8 +89,16 @@ def methodF(ts):
     args = ts['args']
     ts['args'] = [dict(name=a['name'], etype=guess_type(a['type']))
                   for a in args]
-    ts['etype'] = guess_type(ts["type"])
+    ts['etype'] = guess_type(ts.get("type"))
     return ts
+
+
+class Node(namedtuple('Node', ['name', 'description', 'fields', 'methods', 'enums', 'input_fields'])):
+    """[summary]
+
+    Arguments:
+        namedtuple {[type]} -- [description]
+    """
 
 
 def Fields(t):
@@ -99,6 +108,9 @@ def Fields(t):
     for f in fields:
         f['etype'] = guess_type(f)
     return [f for f in fields if f.get('args', []) == []]
+
+
+def DerivesFrom(l): pass
 
 
 def InputFields(t):
@@ -138,11 +150,12 @@ def show(spec):
     for thing in spec['types']:
         if thing['name'].startswith('__'):
             continue
-        print(types_decl.render(
+        node = Node(
             name=thing['name'],
             description=thing['description'],
             fields=Fields(thing),
             methods=Methods(thing),
             input_fields=InputFields(thing),
             enums=EnumValues(thing),
-        ))
+        )
+        print(types_decl.render(node=node))g
