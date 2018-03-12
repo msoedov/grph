@@ -10,14 +10,14 @@ headers = Template("""
 """)
 
 # Todo: topological sort
-# Todo: Derive scalars from string
+# + Todo: Derive scalars from string
 # Todo: Add default values
 # Todo: Add random values
 # Todo: Add network implemenation
-# + Add method ret types
+# + Todo: Add method ret types
 # Fix map type
 types_decl = Template("""
-class {{node.name}}(object):
+class {{node.name}}({{node.derives()}}):
     \"""
     {{node.description}}
     \"""
@@ -28,6 +28,9 @@ class {{node.name}}(object):
     \"""{{f.description}}\"""
     {{ f.name }}:{{ f.etype }} = {{f.defaultValue}}
 {% endfor %}
+{% if node.is_enum() %}
+    __enum__ = True
+{% endif %}
 {% for f in node.enums %}
     \"""{{f.description}}\"""
     {{ f.name }} = "{{f.name}}"
@@ -100,6 +103,23 @@ class Node(namedtuple('Node', ['name', 'description', 'fields', 'methods', 'enum
         namedtuple {[type]} -- [description]
     """
 
+    def derives(self):
+        mapping = {
+            'String': 'str',
+            # 'Boolean': 'bool',
+            'Int': 'int',
+            'ID': 'str'
+        }
+        # Fix date time
+        if self.name in mapping:
+            return mapping[self.name]
+        if not self.fields and not self.methods and not self.enums and not self.input_fields:
+            return 'str'
+        return 'object'
+
+    def is_enum(self):
+        return bool(self.enums)
+
 
 def Fields(t):
     fields = t['fields']
@@ -108,9 +128,6 @@ def Fields(t):
     for f in fields:
         f['etype'] = guess_type(f)
     return [f for f in fields if f.get('args', []) == []]
-
-
-def DerivesFrom(l): pass
 
 
 def InputFields(t):
@@ -158,4 +175,4 @@ def show(spec):
             input_fields=InputFields(thing),
             enums=EnumValues(thing),
         )
-        print(types_decl.render(node=node))g
+        print(types_decl.render(node=node))
