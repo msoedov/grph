@@ -9,10 +9,16 @@ headers = Template("""
 """)
 
 # Todo: topological sort
-
+# Todo: Derive scalars from string
+# Todo: Add default values
+# Todo: Add random values
+# Todo: Add network implemenation
+# + Add method ret types
+# Fix map type
 types_decl = Template("""
 class {{name}}(object):
-    \"""[summary]
+    \"""
+    {{description}}
     \"""
 {% for f in fields %}
     {{ f['name'] }}:{{ f['etype'] }} = {{f.defaultValue or None}}
@@ -25,9 +31,8 @@ class {{name}}(object):
     \"""{{f.description}}\"""
     {{ f.name }} = "{{f.name}}"
 {% endfor %}
-
 {% for m in methods %}
-    def {{ m['name'] }}({% for a in m['args'] %}{{a.name}}:{{a.etype}}{% if not loop.last %}, {% endif %}{% endfor %}):
+    def {{ m['name'] }}({% for a in m['args'] %}{{a.name}}:{{a.etype}}{% if not loop.last %}, {% endif %}{% endfor %}) -> {{m.etype}}:
         \"""
         {{m['description']}}
         \"""
@@ -83,6 +88,7 @@ def methodF(ts):
     args = ts['args']
     ts['args'] = [dict(name=a['name'], etype=guess_type(a['type']))
                   for a in args]
+    ts['etype'] = guess_type(ts["type"])
     return ts
 
 
@@ -127,12 +133,14 @@ def Methods(t):
 
 
 def show(spec):
+
     print(headers.render(spec=spec['types']))
     for thing in spec['types']:
         if thing['name'].startswith('__'):
             continue
         print(types_decl.render(
             name=thing['name'],
+            description=thing['description'],
             fields=Fields(thing),
             methods=Methods(thing),
             input_fields=InputFields(thing),
