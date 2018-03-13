@@ -33,6 +33,7 @@ class {{node.name}}({{node.derives()}}):
         \"""
 {% endfor %}
 
+{% if node.is_composite_t() %}
     def render(self):
         return { {% for f in node.all_fields() %}
             {{ f.name }}: self.{{ f.name }},{% endfor %}
@@ -40,6 +41,14 @@ class {{node.name}}({{node.derives()}}):
 
     def F(self):
         return \"""{ {% for f in node.all_fields() %} {{ f.name }}{% endfor %} }\"""
+{% else %}
+    def render(self):
+        return self
+
+    def F(self):
+        return "{{node.name}}"
+{% endif %}
+
 """)
 
 
@@ -127,6 +136,9 @@ class Node(namedtuple('Node', ['name', 'description', 'fields', 'methods', 'enum
 
     def is_enum(self):
         return bool(self.enums)
+
+    def is_composite_t(self):
+        return self.derives() == 'object'
 
     def all_fields(self):
         return sorted_fields(self.fields + self.input_fields)
