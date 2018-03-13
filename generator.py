@@ -1,8 +1,9 @@
 from collections import namedtuple
 from jinja2 import Template
 
-# >> > s = "{% for element in elements %}{{loop.index}} {% endfor %}"
-# >> > Template(s).render(elements=["a", "b", "c", "d"])
+
+BasicTypes = set(['String', 'Int', 'Boolean'])
+
 
 headers = Template("""
 {% for t in spec %}{{t.name}}{% if not loop.last %} = {% endif %}{% endfor %} = None
@@ -15,25 +16,30 @@ class {{node.name}}({{node.derives()}}):
     {{node.description}}
     \"""
 {% for f in node.fields %}
-    {{ f.name }}:{{ f.etype }} = {{f.defaultValue or None}}
-{% endfor %}
+    {{ f.name }}:{{ f.etype }} = {{f.defaultValue or None}} {% endfor %}
 {% for f in node.input_fields %}
     \"""{{f.description}}\"""
-    {{ f.name }}:{{ f.etype }} = {{f.defaultValue}}
-{% endfor %}
+    {{ f.name }}:{{ f.etype }} = {{f.defaultValue}} {% endfor %}
 {% if node.is_enum() %}
     __enum__ = True
 {% endif %}
 {% for f in node.enums %}
     \"""{{f.description}}\"""
-    {{ f.name }} = "{{f.name}}"
-{% endfor %}
+    {{ f.name }} = "{{f.name}}" {% endfor %}
 {% for m in node.methods %}
     def {{ m.name }}({% for a in m.args %}{{a.name}}:{{a.etype}}{% if not loop.last %}, {% endif %}{% endfor %}) -> {{m.etype}}:
         \"""
         {{m.description}}
         \"""
 {% endfor %}
+
+    def render(self):
+        return { {% for f in node.all_fields() %}
+            {{ f.name }}: self.{{ f.name }},{% endfor %}
+        }
+
+    def F(self):
+        return \"""{ {% for f in node.all_fields() %} {{ f.name }}{% endfor %} }\"""
 """)
 
 
@@ -94,6 +100,10 @@ def methodF(ts):
     return ts
 
 
+def sorted_fields(fs):
+    return sorted(fs, key=lambda x: x['name'])
+
+
 class Node(namedtuple('Node', ['name', 'description', 'fields', 'methods', 'enums', 'input_fields'])):
     """[summary]
 
@@ -118,6 +128,9 @@ class Node(namedtuple('Node', ['name', 'description', 'fields', 'methods', 'enum
     def is_enum(self):
         return bool(self.enums)
 
+    def all_fields(self):
+        return sorted_fields(self.fields + self.input_fields)
+
 
 def Fields(t):
     fields = t['fields']
@@ -125,7 +138,7 @@ def Fields(t):
         return []
     for f in fields:
         f['etype'] = guess_type(f)
-    return [f for f in fields if f.get('args', []) == []]
+    return sorted_fields([f for f in fields if f.get('args', []) == []])
 
 
 def InputFields(t):
@@ -145,7 +158,7 @@ def InputFields(t):
         return []
     for f in fields:
         f['etype'] = guess_type(f)
-    return fields
+    return sorted_fields(fields)
 
 
 def EnumValues(t):
@@ -163,7 +176,7 @@ def show(spec):
 
     print(headers.render(spec=spec['types']))
     for thing in spec['types']:
-        if thing['name'].startswith('__'):
+        if thing['name'].startswith('__') or thing['name'] in BasicTypes:
             continue
         node = Node(
             name=thing['name'],
