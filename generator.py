@@ -9,13 +9,6 @@ headers = Template("""
 
 """)
 
-# Todo: topological sort
-# + Todo: Derive scalars from string
-# Todo: Add default values
-# Todo: Add random values
-# Todo: Add network implemenation
-# + Todo: Add method ret types
-# Fix map type
 types_decl = Template("""
 class {{node.name}}({{node.derives()}}):
     \"""
@@ -68,6 +61,12 @@ def of_type(ts):
     """
     if ts.get('kind') == 'OBJECT':
         return ts['name']
+    if ts.get('kind') == 'INTERFACE':
+        return ts['name']
+    if ts.get('kind') == 'INPUT_OBJECT':
+        return ts['name']
+    if ts.get('kind') == 'UNION':
+        return ts['name']
     if ts.get('kind') == 'ENUM':
         return ts['name']
     if ts.get('args'):
@@ -76,8 +75,7 @@ def of_type(ts):
         return ts['name']
     subKind = ts.get('type') or ts.get('ofType')
     if not subKind:
-        return "map"
-        # raise ValueError(ts)
+        raise ValueError(ts)
     if subKind['kind'] == 'LIST':
         subT = of_type(ts.get('type') or ts.get('ofType'))
         return'[{}]'.format(subT)
