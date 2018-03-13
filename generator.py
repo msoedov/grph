@@ -31,12 +31,13 @@ class {{node.name}}({{node.derives()}}):
         \"""
         {{m.description}}
         \"""
+        tmpl = f"{{ m.name }}({% for a in m.args %}{{a.name}}:{ {{a.name}} }{% if not loop.last %}, {% endif %}{% endfor %})"
 {% endfor %}
 
 {% if node.is_composite_t() %}
     def render(self):
         return { {% for f in node.all_fields() %}
-            {{ f.name }}: self.{{ f.name }},{% endfor %}
+            "{{ f.name }}": self.{{ f.name }},{% endfor %}
         }
 
     def F(self):
