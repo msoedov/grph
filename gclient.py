@@ -1,10 +1,12 @@
 import requests
 
-url = 'https://api.github.com/graphql'
+from data.test import *
+
+url = 'http://localhost:9002/graphql'
 json = {
-    'query': '{ viewer { repositories(first: 30) { totalCount pageInfo { hasNextPage endCursor } edges { node { name } } } } }'}
-api_token = "your api token here..."
-headers = {'Authorization': 'token %s' % api_token}
+    'query': Employee().get_short()
+}
+headers = {'Authorization': 'None'}
 
 r = requests.post(url=url, json=json, headers=headers)
 print(r.text)

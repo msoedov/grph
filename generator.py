@@ -1,3 +1,4 @@
+import sys
 from collections import namedtuple
 from jinja2 import Template
 
@@ -9,7 +10,9 @@ def clever_type(a):
 
 
 BasicTypes = set(['String', 'Int', 'Boolean'])
-
+AST = {}
+ETYPE = 'etype'
+RANK0 = 'rank0'
 
 headers = Template("""
 {% for t in spec %}{{t.name}}{% if not loop.last %} = {% endif %}{% endfor %} = None
@@ -58,6 +61,11 @@ class {{node.name}}({{node.derives()}}):
         return "{{node.name}}"
 {% endif %}
 
+    def get(self):
+        return "{ {{node.name.lower()}} {{node.flatern()}}  }"
+
+    def get_short(self):
+        return "{ {{node.name.lower()}} {{node.flatern(0)}}  }"
 """)
 
 types_decl.environment.globals['clever_type'] = clever_type
@@ -116,7 +124,7 @@ def methodF(ts):
     args = ts['args']
     ts['args'] = [dict(name=a['name'], etype=guess_type(a['type']))
                   for a in args]
-    ts['etype'] = guess_type(ts.get("type"))
+    ts[ETYPE] = guess_type(ts.get("type"))
     return ts
 
 
@@ -154,13 +162,22 @@ class Node(namedtuple('Node', ['name', 'description', 'fields', 'methods', 'enum
     def all_fields(self):
         return sorted_fields(self.fields + self.input_fields)
 
+    def flatern(self, rank=-1):
+        fields = self.all_fields()
+
+        def simple(name): return name.strip('[]') if name else name
+        if rank == 0:
+            return "{" + " ".join([f['name'] for f in fields if simple(f[ETYPE]) not in AST]) + "}"
+        return "{" + " ".join([f['name'] if f[ETYPE] not in AST else '{}' for f in fields]) + "}"
+        # return "{" + " ".join([f['name'] for f in fields]) + "}"
+
 
 def Fields(t):
     fields = t['fields']
     if not fields:
         return []
     for f in fields:
-        f['etype'] = guess_type(f)
+        f[ETYPE] = guess_type(f)
     return sorted_fields([f for f in fields if f.get('args', []) == []])
 
 
@@ -180,7 +197,7 @@ def InputFields(t):
     if not fields:
         return []
     for f in fields:
-        f['etype'] = guess_type(f)
+        f[ETYPE] = guess_type(f)
     return sorted_fields(fields)
 
 
@@ -198,6 +215,7 @@ def Methods(t):
 def show(spec):
 
     print(headers.render(spec=spec['types']))
+    nodes = []
     for thing in spec['types']:
         if thing['name'].startswith('__') or thing['name'] in BasicTypes:
             continue
@@ -209,4 +227,8 @@ def show(spec):
             input_fields=InputFields(thing),
             enums=EnumValues(thing),
         )
+        nodes.append(node)
+        AST[node.name] = node
+    # print(AST, file=sys.stderr)
+    for node in nodes:
         print(types_decl.render(node=node))
