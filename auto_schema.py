@@ -101,7 +101,7 @@ def main():
         body = body + k
     print('')
 
-    print(resolve(body))
+    resolve(body)
 
 
 if __name__ == '__main__':

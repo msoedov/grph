@@ -2,6 +2,12 @@ from collections import namedtuple
 from jinja2 import Template
 
 
+def clever_type(a):
+    if not a:
+        return None
+    return f"'{a}'"
+
+
 BasicTypes = set(['String', 'Int', 'Boolean'])
 
 
@@ -16,10 +22,10 @@ class {{node.name}}({{node.derives()}}):
     {{node.description}}
     \"""
 {% for f in node.fields %}
-    {{ f.name }}:{{ f.etype }} = {{f.defaultValue or None}} {% endfor %}
+    {{ f.name }}:{{ f.etype }} = {{clever_type(f.defaultValue) }} {% endfor %}
 {% for f in node.input_fields %}
     \"""{{f.description}}\"""
-    {{ f.name }}:{{ f.etype }} = {{f.defaultValue}} {% endfor %}
+    {{ f.name }}:{{ f.etype }} = {{ clever_type(f.defaultValue) }} {% endfor %}
 {% if node.is_enum() %}
     __enum__ = True
 {% endif %}
@@ -53,6 +59,8 @@ class {{node.name}}({{node.derives()}}):
 {% endif %}
 
 """)
+
+types_decl.environment.globals['clever_type'] = clever_type
 
 
 def know_types(t):
