@@ -105,6 +105,6 @@ def main():
 
 
 if __name__ == '__main__':
-    with open("sample.json", 'r') as fp:
+    with open(sys.argv[1] if len(sys.argv) > 1 else 'sample.json', 'r') as fp:
         data = fp.read()
         (resolve(data))
