@@ -27,11 +27,12 @@ class {{node.name}}({{node.derives()}}):
     \"""{{f.description}}\"""
     {{ f.name }} = "{{f.name}}" {% endfor %}
 {% for m in node.methods %}
-    def {{ m.name }}({% for a in m.args %}{{a.name}}:{{a.etype}}{% if not loop.last %}, {% endif %}{% endfor %}) -> {{m.etype}}:
+    def {{ m.name }}(self, {% for a in m.args %}{{a.name}}:{{a.etype}}{% if not loop.last %}, {% endif %}{% endfor %}) -> {{m.etype}}:
         \"""
         {{m.description}}
         \"""
-        tmpl = f"{{ m.name }}({% for a in m.args %}{{a.name}}:{ {{a.name}} }{% if not loop.last %}, {% endif %}{% endfor %})"
+        tmpl = f"{{ m.name }}({% for a in m.args %}{{a.name}}:{ {{a.name}} }{% if not loop.last %}, {% endif %}{% endfor %}) { {{m.etype}}.F() }"
+        return tmpl
 {% endfor %}
 
 {% if node.is_composite_t() %}
@@ -40,6 +41,7 @@ class {{node.name}}({{node.derives()}}):
             "{{ f.name }}": self.{{ f.name }},{% endfor %}
         }
 
+    @classmethod
     def F(self):
         return \"""{ {% for f in node.all_fields() %} {{ f.name }}{% endfor %} }\"""
 {% else %}
