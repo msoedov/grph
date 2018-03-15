@@ -9,6 +9,12 @@ def clever_type(a):
     return f"'{a}'"
 
 
+def clever_name(a):
+    if a[0].islower():
+        return a.capitalize()
+    return a
+
+
 BasicTypes = set(['String', 'Int', 'Boolean'])
 AST = {}
 ETYPE = 'etype'
@@ -58,7 +64,7 @@ class {{node.name}}({{node.derives()}}):
 {% endif %}
 {% for f in node.enums %}
     \"""{{f.description}}\"""
-    {{ f.name }} = "{{f.name}}" {% endfor %}
+    {{ clever_name(f.name) }} = "{{f.name}}" {% endfor %}
 {% for m in node.methods %}
     def {{ m.name }}(self, {% for a in m.args %}{{a.name}}:{{a.etype}}{% if not loop.last %}, {% endif %}{% endfor %}) -> {{m.etype}}:
         \"""
@@ -98,13 +104,14 @@ class {{node.name}}({{node.derives()}}):
 """)
 
 types_decl.environment.globals['clever_type'] = clever_type
+types_decl.environment.globals['clever_name'] = clever_name
 
 
 def know_types(t):
     mapping = {
         'String': 'str',
         'Boolean': 'bool',
-        'Int': 'int',
+        'Int': 'int'
     }
     return mapping.get(t, t)
 
