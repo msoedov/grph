@@ -17,3 +17,5 @@ def query(opt):
 
 query(Employee().get())
 query(Query().company(1))
+query(Query().company(2))
+query(Query().employee(3))

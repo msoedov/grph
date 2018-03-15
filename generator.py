@@ -67,9 +67,6 @@ class {{node.name}}({{node.derives()}}):
         tmpl = f"{{ m.name }}({% for a in m.args %}{{a.name}}:{ {{a.name}} }{% if not loop.last %}, {% endif %}{% endfor %}) { {{m.etype}}.F() }"
         return self.wrap(tmpl, fn=True)
 {% endfor %}
-    @classmethod
-    def t(self):
-        return { {% for f in node.all_fields()%}"{{f.name}}": {{f.etype}}, {% endfor%} }
 
 {% if node.is_composite_t() %}
     def render(self):
@@ -80,13 +77,6 @@ class {{node.name}}({{node.derives()}}):
     @classmethod
     def F(self):
         return dumps(self)
-{% else %}
-    def render(self):
-        return self
-    @classmethod
-    def F(self, simple=False):
-        return "{{node.name}}"
-{% endif %}
 
     @classmethod
     def get(self):
@@ -97,6 +87,14 @@ class {{node.name}}({{node.derives()}}):
         if fn:
             return "{ " + subquery +  " }"
         return "{ {{node.name.lower()}} " + subquery +  " }"
+{% else %}
+    def render(self):
+        return self
+    @classmethod
+    def F(self):
+        return "{{node.name}}"
+{% endif %}
+
 """)
 
 types_decl.environment.globals['clever_type'] = clever_type
