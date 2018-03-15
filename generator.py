@@ -15,7 +15,31 @@ ETYPE = 'etype'
 RANK0 = 'rank0'
 
 headers = Template("""
-{% for t in spec %}{{t.name}}{% if not loop.last %} = {% endif %}{% endfor %} = None
+
+{% for t in spec %}
+{{t.name}} = "{{t.name}}" {% if not loop.last %} {% endif %}{% endfor %}
+
+def dumps(obj, level=1):
+    annot = obj.__annotations__
+    t = obj.__class__
+
+    def value_helper(v):
+        w = v
+        if isinstance(v, list):
+            v = v[0]
+        if isinstance(v, str):
+            v = globals()[v]
+        if isinstance(v, list):
+            v = v[0]
+        return v
+    annot = {k: value_helper(v) for k, v in annot.items()}
+    if level <= 0:
+        annot = {k: v for k, v in annot.items(
+        ) if v and not hasattr(v, '__annotations__')}
+    ret = '{' + ' '.join(n + " " + dumps(klass, level=level-1) if hasattr(
+        klass, '__annotations__') else n
+        for n, klass in annot.items()) + '}'
+    return ret
 
 """)
 
@@ -41,8 +65,11 @@ class {{node.name}}({{node.derives()}}):
         {{m.description}}
         \"""
         tmpl = f"{{ m.name }}({% for a in m.args %}{{a.name}}:{ {{a.name}} }{% if not loop.last %}, {% endif %}{% endfor %}) { {{m.etype}}.F() }"
-        return tmpl
+        return self.wrap(tmpl, fn=True)
 {% endfor %}
+    @classmethod
+    def t(self):
+        return { {% for f in node.all_fields()%}"{{f.name}}": {{f.etype}}, {% endfor%} }
 
 {% if node.is_composite_t() %}
     def render(self):
@@ -52,20 +79,24 @@ class {{node.name}}({{node.derives()}}):
 
     @classmethod
     def F(self):
-        return \"""{ {% for f in node.all_fields() %} {{ f.name }}{% endfor %} }\"""
+        return dumps(self)
 {% else %}
     def render(self):
         return self
-
-    def F(self):
+    @classmethod
+    def F(self, simple=False):
         return "{{node.name}}"
 {% endif %}
 
+    @classmethod
     def get(self):
-        return "{ {{node.name.lower()}} {{node.flatern()}}  }"
+        return self.wrap(dumps(self))
 
-    def get_short(self):
-        return "{ {{node.name.lower()}} {{node.flatern(0)}}  }"
+    @classmethod
+    def wrap(self, subquery, fn=False):
+        if fn:
+            return "{ " + subquery +  " }"
+        return "{ {{node.name.lower()}} " + subquery +  " }"
 """)
 
 types_decl.environment.globals['clever_type'] = clever_type
@@ -214,7 +245,8 @@ def Methods(t):
 
 def show(spec):
 
-    print(headers.render(spec=spec['types']))
+    print(headers.render(
+        spec=[t for t in spec['types'] if not t['name'].startswith('__')]))
     nodes = []
     for thing in spec['types']:
         if thing['name'].startswith('__') or thing['name'] in BasicTypes:
