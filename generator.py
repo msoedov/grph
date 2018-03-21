@@ -20,6 +20,7 @@ AST = {}
 ETYPE = 'etype'
 RANK0 = 'rank0'
 
+
 headers = Template("""
 
 {% for t in spec %}
@@ -47,38 +48,8 @@ def dumps(obj, level=1):
         for n, klass in annot.items()) + '}'
     return ret
 
-""")
 
-types_decl = Template("""
-class {{node.name}}({{node.derives()}}):
-    \"""
-    {{node.description}}
-    \"""
-{% for f in node.fields %}
-    {{ f.name }}:{{ f.etype }} = {{clever_type(f.defaultValue) }} {% endfor %}
-{% for f in node.input_fields %}
-    \"""{{f.description}}\"""
-    {{ f.name }}:{{ f.etype }} = {{ clever_type(f.defaultValue) }} {% endfor %}
-{% if node.is_enum() %}
-    __enum__ = True
-{% endif %}
-{% for f in node.enums %}
-    \"""{{f.description}}\"""
-    {{ clever_name(f.name) }} = "{{f.name}}" {% endfor %}
-{% for m in node.methods %}
-    def {{ m.name }}(self, {% for a in m.args %}{{a.name}}:{{a.etype}}{% if not loop.last %}, {% endif %}{% endfor %}) -> {{m.etype}}:
-        \"""
-        {{m.description}}
-        \"""
-        tmpl = f"{{ m.name }}({% for a in m.args %}{{a.name}}:{ {{a.name}} }{% if not loop.last %}, {% endif %}{% endfor %}) { {{m.etype}}.F() }"
-        return self.wrap(tmpl, fn=True)
-{% endfor %}
-
-{% if node.is_composite_t() %}
-    def render(self):
-        return { {% for f in node.all_fields() %}
-            "{{ f.name }}": self.{{ f.name }},{% endfor %}
-        }
+class Graph(object):
 
     @classmethod
     def F(self):
@@ -90,9 +61,58 @@ class {{node.name}}({{node.derives()}}):
 
     @classmethod
     def wrap(self, subquery, fn=False):
+        subquery = subquery.replace("None", "null")
         if fn:
-            return "{ " + subquery +  " }"
-        return "{ {{node.name.lower()}} " + subquery +  " }"
+            return"{ " + subquery + " }"
+        if self.__name__ == "Query":
+            return subquery
+        return "{ " + self.__name__.lower() + subquery + "}"
+
+""")
+
+types_decl = Template("""
+class {{node.name}}({{node.derives()}}):
+{% if node.description %}
+    \"""
+    {{node.description}}
+    \"""
+{% endif %}
+{% for f in node.fields %}
+    {{ f.name }}:{{ f.etype }} = {{clever_type(f.defaultValue) }} {% endfor %}
+{% for f in node.input_fields %}
+    {% if f.description %}
+    \"""
+    {{f.description}}
+    \"""
+    {% endif %}
+    {{ f.name }}:{{ f.etype }} = {{ clever_type(f.defaultValue) }} {% endfor %}
+{% if node.is_enum() %}
+    __enum__ = True
+{% endif %}
+{% for f in node.enums %}
+    {% if f.description %}
+    \"""
+    {{f.description}}
+    \"""
+    {% endif %}
+    {{ clever_name(f.name) }} = "{{f.name}}" {% endfor %}
+{% for m in node.methods %}
+    def {{ m.name }}(self, {% for a in m.args %}{{a.name}}:{{a.etype}}{% if not loop.last %}, {% endif %}{% endfor %}) -> {{m.etype}}:
+        {% if m.description %}
+        \"""
+        {{m.description}}
+        \"""
+        {% endif %}
+        tmpl = f"{{ m.name }}({% for a in m.args %}{{a.name}}:{ {{a.name}} }{% if not loop.last %}, {% endif %}{% endfor %}) { {{m.etype}}.F() }"
+        return self.wrap(tmpl, fn=True)
+{% endfor %}
+
+{% if node.is_composite_t() %}
+    def render(self):
+        return { {% for f in node.all_fields() %}
+            "{{ f.name }}": self.{{ f.name }},{% endfor %}
+        }
+
 {% else %}
     def render(self):
         return self
@@ -187,13 +207,13 @@ class Node(namedtuple('Node', ['name', 'description', 'fields', 'methods', 'enum
             return mapping[self.name]
         if not self.fields and not self.methods and not self.enums and not self.input_fields:
             return 'str'
-        return 'object'
+        return 'Graph'
 
     def is_enum(self):
         return bool(self.enums)
 
     def is_composite_t(self):
-        return self.derives() == 'object'
+        return self.derives() == 'Graph'
 
     def all_fields(self):
         return sorted_fields(self.fields + self.input_fields)
