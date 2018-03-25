@@ -22,6 +22,12 @@ def collect_values(hash_map):
     return
 
 
+def Val(name):
+    if name in pool:
+        return pool[name].pop()
+    return "?"
+
+
 def query(opt):
     print(">> ", opt)
     url = 'http://localhost:9002/graphql'
@@ -31,16 +37,11 @@ def query(opt):
     headers = {'Authorization': 'None'}
 
     r = requests.post(url=url, json=json, headers=headers)
-    # pprint.pprint(r.json())
+    pprint.pprint(r.json())
     assert r.ok, r
     collect_values(r.json())
     return r
 
-
-# query(Employee().get())
-# query(Query().company(1))
-# query(Query().company(2))
-# query(Query().employee(3))
 
 def test_query():
     query(Query.get())
@@ -59,7 +60,24 @@ def test_offers_none():
 
 
 def test_company():
-    query(Query().company(id='"5"'))
+    query(Query().company(id='5'))
 
 
-print(Segment().__class__.__name__)
+def test_mutation():
+    query(Mutation().createUser(name="Ivan", password="Govnov", email="null",
+                                role=None, picture=":",
+                                active=True,
+                                readonly=True,
+                                emailNotification=False, companyId=""))
+
+
+def test_mutation_v2():
+    query(Mutation().createUser(name=Val('name'),
+                                password=Val('password'),
+                                email=Val('email'),
+                                role=None,
+                                picture=":",
+                                active=True,
+                                readonly=True,
+                                emailNotification=False,
+                                companyId=""))

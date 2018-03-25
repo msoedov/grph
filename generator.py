@@ -22,7 +22,7 @@ RANK0 = 'rank0'
 
 
 headers = Template("""
-
+import json
 {% for t in spec %}
 {{t.name}} = "{{t.name}}" {% if not loop.last %} {% endif %}{% endfor %}
 
@@ -60,10 +60,14 @@ class Graph(object):
         return self.wrap(dumps(self))
 
     @classmethod
-    def wrap(self, subquery, fn=False):
-        subquery = subquery.replace("None", "null")
+    def wrap(self, subquery, fn=False, **kwargs):
+        if kwargs:
+            _kwargs = {name: json.dumps(val) for name, val in kwargs.items()}
+            _kwargs['ret'] = kwargs.get('ret', None)
+            subquery = subquery % _kwargs
+        subquery = subquery.replace('"null"', 'null')
         if fn:
-            return"{ " + subquery + " }"
+            return self.__name__.lower() + " {" + subquery + " } "
         if self.__name__ == "Query":
             return subquery
         return "{ " + self.__name__.lower() + subquery + "}"
@@ -103,8 +107,8 @@ class {{node.name}}({{node.derives()}}):
         {{m.description}}
         \"""
         {% endif %}
-        tmpl = f"{{ m.name }}({% for a in m.args %}{{a.name}}:{ {{a.name}} }{% if not loop.last %}, {% endif %}{% endfor %}) { {{m.etype}}.F() }"
-        return self.wrap(tmpl, fn=True)
+        tmpl = "{{ m.name }}({% for a in m.args %}{{a.name}}:%({{a.name}})s{% if not loop.last %}, {% endif %}{% endfor %}) %(ret)s"
+        return self.wrap(tmpl, fn=True, {% for a in m.args %}{{a.name}}={{a.name}},{% endfor %}ret={{m.etype}}.F())
 {% endfor %}
 
 {% if node.is_composite_t() %}
