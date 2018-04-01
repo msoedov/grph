@@ -8,11 +8,11 @@ pool = defaultdict(set)
 
 
 def serialize(obj):
-    if not hasattr(obj, 'render'):
+    if not hasattr(obj, "render"):
         return json.dumps(obj)
+
     vals = obj.render()
-    buf = '{' + ', '.join([f'{n}:{serialize(v)}' for n,
-                           v in vals.items()]) + '}'
+    buf = "{" + ", ".join([f"{n}:{serialize(v)}" for n, v in vals.items()]) + "}"
     return buf
 
 
@@ -24,12 +24,15 @@ def collect_values(hash_map):
         if isinstance(v, dict):
             collect_values(v)
             continue
+
         elif isinstance(v, list):
             for val in v:
                 if isinstance(val, dict):
                     return collect_values(val)
+
                 pool[k].add(val)
             continue
+
         pool[k].add(v)
     return
 
@@ -37,16 +40,15 @@ def collect_values(hash_map):
 def Val(name):
     if name in pool:
         return pool[name].pop()
+
     return "?"
 
 
 def query(opt):
     print(">> ", opt)
-    url = 'http://localhost:9002/graphql'
-    json = {
-        'query': opt
-    }
-    headers = {'Authorization': 'None'}
+    url = "http://localhost:9002/graphql"
+    json = {"query": opt}
+    headers = {"Authorization": "None"}
 
     r = requests.post(url=url, json=json, headers=headers)
     pprint.pprint(r.json())
@@ -64,7 +66,7 @@ def test_segment():
 
 
 def test_offers():
-    query(Query().allOffers(filter='null'))
+    query(Query().allOffers(filter="null"))
 
 
 def test_offers_with_filter():
@@ -76,24 +78,36 @@ def test_offers_none():
 
 
 def test_company():
-    query(Query().company(id='5'))
+    query(Query().company(id="5"))
 
 
 def test_mutation():
-    query(Mutation().createUser(name="Ivan", password="Govnov", email="null",
-                                role=None, picture=":",
-                                active=True,
-                                readonly=True,
-                                emailNotification=False, companyId=""))
+    query(
+        Mutation().createUser(
+            name="Ivan",
+            password="Govnov",
+            email="null",
+            role=None,
+            picture=":",
+            active=True,
+            readonly=True,
+            emailNotification=False,
+            companyId="",
+        )
+    )
 
 
 def test_mutation_v2():
-    query(Mutation().createUser(name=Val('name'),
-                                password=Val('password'),
-                                email=Val('email'),
-                                role=None,
-                                picture=":",
-                                active=True,
-                                readonly=True,
-                                emailNotification=False,
-                                companyId=""))
+    query(
+        Mutation().createUser(
+            name=Val("name"),
+            password=Val("password"),
+            email=Val("email"),
+            role=None,
+            picture=":",
+            active=True,
+            readonly=True,
+            emailNotification=False,
+            companyId="",
+        )
+    )
