@@ -1,5 +1,6 @@
 python auto_schema.py > spec.py
 python auto_schema.py data/test.json > data/test.py
+black data/test.py
 # autopep8 -ir data/test.py
 
 # ls data/*.json | Xargs python auto_schema.py

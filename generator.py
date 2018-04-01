@@ -49,7 +49,18 @@ def dumps(obj, level=1):
     return ret
 
 
-class Graph(object):
+def serialize(obj):
+    if not hasattr(obj, 'render'):
+        return json.dumps(obj)
+    vals = obj.render()
+    buf = '{' + ', '.join([f'{n}:{serialize(v)}' for n,
+                           v in vals.items()]) + '}'
+    return buf
+
+
+class node(object):
+    def __init__(self, **kwargs):
+        [setattr(self, name, kwargs.pop(name, val)) for name, val in self.render().items()]
 
     @classmethod
     def F(self):
@@ -62,7 +73,7 @@ class Graph(object):
     @classmethod
     def wrap(self, subquery, fn=False, **kwargs):
         if kwargs:
-            _kwargs = {name: json.dumps(val) for name, val in kwargs.items()}
+            _kwargs = {name: serialize(val) for name, val in kwargs.items()}
             _kwargs['ret'] = kwargs.get('ret', None)
             subquery = subquery % _kwargs
         subquery = subquery.replace('"null"', 'null')
@@ -72,6 +83,8 @@ class Graph(object):
             return subquery
         return "{ " + self.__name__.lower() + subquery + "}"
 
+    def __str__(self):
+        return json.dumps(self.render())
 """)
 
 types_decl = Template("""
@@ -98,8 +111,7 @@ class {{node.name}}({{node.derives()}}):
     \"""
     {{f.description}}
     \"""
-    {% endif %}
-    {{ clever_name(f.name) }} = "{{f.name}}" {% endfor %}
+    {% endif %}{{ clever_name(f.name) }} = "{{f.name}}" {% endfor %}
 {% for m in node.methods %}
     def {{ m.name }}(self, {% for a in m.args %}{{a.name}}:{{a.etype}}{% if not loop.last %}, {% endif %}{% endfor %}) -> {{m.etype}}:
         {% if m.description %}
@@ -211,13 +223,13 @@ class Node(namedtuple('Node', ['name', 'description', 'fields', 'methods', 'enum
             return mapping[self.name]
         if not self.fields and not self.methods and not self.enums and not self.input_fields:
             return 'str'
-        return 'Graph'
+        return 'node'
 
     def is_enum(self):
         return bool(self.enums)
 
     def is_composite_t(self):
-        return self.derives() == 'Graph'
+        return self.derives() == 'node'
 
     def all_fields(self):
         return sorted_fields(self.fields + self.input_fields)

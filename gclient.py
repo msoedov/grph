@@ -7,6 +7,18 @@ from collections import defaultdict
 pool = defaultdict(set)
 
 
+def serialize(obj):
+    if not hasattr(obj, 'render'):
+        return json.dumps(obj)
+    vals = obj.render()
+    buf = '{' + ', '.join([f'{n}:{serialize(v)}' for n,
+                           v in vals.items()]) + '}'
+    return buf
+
+
+print(serialize(OfferFilter(status=False)))
+
+
 def collect_values(hash_map):
     for k, v in hash_map.items():
         if isinstance(v, dict):
@@ -53,6 +65,10 @@ def test_segment():
 
 def test_offers():
     query(Query().allOffers(filter='null'))
+
+
+def test_offers_with_filter():
+    query(Query().allOffers(filter=OfferFilter()))
 
 
 def test_offers_none():
