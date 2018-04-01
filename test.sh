@@ -6,3 +6,5 @@ black data/test.py
 # ls data/*.json | Xargs python auto_schema.py
 py.test -vvv -q -s . --doctest-modules
 python test_spec.py
+
+py.test -vv gclient.py

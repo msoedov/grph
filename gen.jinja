@@ -1,0 +1,46 @@
+class {{node.name}}({{node.derives()}}):
+{% if node.description %}
+    """
+    {{node.description}}
+    """
+{% endif %}
+{% for f in node.fields %}
+    {{ f.name }}:{{ f.etype }} = {{clever_type(f.defaultValue) }} {% endfor %}
+{% for f in node.input_fields %}
+    {% if f.description %}
+    """
+    {{f.description}}
+    """
+    {% endif %}
+    {{ f.name }}:{{ f.etype }} = {{ clever_type(f.defaultValue) }} {% endfor %}
+{% if node.is_enum() %}
+    __enum__ = True
+{% endif %}
+{% for f in node.enums %}
+    {% if f.description %}
+    """
+    {{f.description}}
+    """
+    {% endif %}{{ clever_name(f.name) }} = "{{f.name}}" {% endfor %}
+{% for m in node.methods %}
+    def {{ m.name }}(self, {% for a in m.args %}{{a.name}}:{{a.etype}}{% if not loop.last %}, {% endif %}{% endfor %}) -> {{m.etype}}:
+        {% if m.description %}
+        """
+        {{m.description}}
+        """
+        {% endif %}
+        tmpl = "{{ m.name }}({% for a in m.args %}{{a.name}}:%({{a.name}})s{% if not loop.last %}, {% endif %}{% endfor %}) %(ret)s"
+        return self.wrap(tmpl, fn=True, {% for a in m.args %}{{a.name}}={{a.name}},{% endfor %}ret={{m.etype}}.F())
+{% endfor %}
+{% if node.is_composite_t() %}
+    def render(self):
+        return { {% for f in node.all_fields() %}
+            "{{ f.name }}": self.{{ f.name }},{% endfor %}
+        }
+{% else %}
+    def render(self):
+        return self
+    @classmethod
+    def F(self):
+        return "{{node.name}}"
+{% endif %}
