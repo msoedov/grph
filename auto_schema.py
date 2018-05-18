@@ -87,7 +87,7 @@ def match(thing, indent=0):
 def resolve(json_raw):
     pre = """import trafaret as t\ndef D(x): return t.Dict(x).allow_extra('*')\nschema="""
     data = json.loads(json_raw)['data']['__schema']
-    print(generator.show(data))
+    generator.show(data)
     return pre + match(data)
 
 
@@ -107,4 +107,4 @@ def main():
 if __name__ == '__main__':
     with open(sys.argv[1] if len(sys.argv) > 1 else 'sample.json', 'r') as fp:
         data = fp.read()
-        (resolve(data))
+        resolve(data)

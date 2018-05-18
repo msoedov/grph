@@ -17,7 +17,7 @@ def clever_name(a):
     return a
 
 
-BasicTypes = set(["String", "Int", "Boolean"])
+BasicTypes = set(["String", "Int", "Boolean", "Float", "ID"])
 AST = {}
 ETYPE = "etype"
 RANK0 = "rank0"
@@ -86,7 +86,8 @@ def methodF(ts):
     """
     """
     args = ts["args"]
-    ts["args"] = [dict(name=a["name"], etype=guess_type(a["type"])) for a in args]
+    ts["args"] = [dict(name=a["name"], etype=guess_type(a["type"]))
+                  for a in args]
     ts[ETYPE] = guess_type(ts.get("type"))
     return ts
 
@@ -97,7 +98,8 @@ def sorted_fields(fs):
 
 class Node(
     namedtuple(
-        "Node", ["name", "description", "fields", "methods", "enums", "input_fields"]
+        "Node", ["name", "description", "fields",
+                 "methods", "enums", "input_fields"]
     )
 ):
     """[summary]
@@ -190,11 +192,11 @@ def Methods(t):
 
 
 def show(spec):
-
-    print(
-        headers.render(
-            spec=[t for t in spec["types"] if not t["name"].startswith("__")]
-        )
+    variables = [t for t in spec["types"]
+                 if not t["name"].startswith("__")]
+    print(headers.render(
+        spec=variables
+    )
     )
     nodes = []
     for thing in spec["types"]:
@@ -211,6 +213,5 @@ def show(spec):
         )
         nodes.append(node)
         AST[node.name] = node
-    # print(AST, file=sys.stderr)
     for node in nodes:
-        print(types_decl.render(node=node))
+        print(types_decl.render(node=node) or '')
