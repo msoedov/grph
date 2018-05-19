@@ -5,6 +5,8 @@ import sys
 def define(name, names):
     ns = sys.modules[name]
     for name in names:
+        if name == 'ID':
+            continue
         setattr(ns, name, name)
 
 
@@ -61,7 +63,7 @@ class node(object):
             subquery = subquery % _kwargs
         subquery = subquery.replace('"null"', 'null')
         if fn:
-            return query_name(self) + " {" + subquery + " } "
+            return check_modifier(self) + " {" + subquery + " } "
         if is_root(self):
             return subquery
         return "{ " + self.__name__.lower() + subquery + "}"
@@ -74,10 +76,34 @@ def is_root(klass):
     return 'query' in klass.__name__.lower() or 'mutation' in klass.__name__.lower()
 
 
-def query_name(klass):
+def check_modifier(klass):
     if 'mutation' in klass.__name__.lower():
         return 'mutation'
     return klass.__name__
 
 
-ID = str
+class ID(str):
+
+    """
+    The `ID` scalar type represents a unique identifier, often used to
+refetch an object or as key for a cache. The ID type appears in a JSON
+response as a String; however, it is not intended to be human-readable.
+When expected as an input type, any string (such as `"4"`) or integer
+(such as `4`) input value will be accepted as an ID.
+    """
+
+    def render(self):
+        return self
+
+    @classmethod
+    def F(self):
+        return "ID"
+
+
+def RootOf(module):
+    module = sys.modules[module]
+    for k, v in vars(module).items():
+        if 'query' in k.lower():
+            print(k, v)
+            return v
+    raise NameError('No query def found!')
