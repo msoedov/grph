@@ -1,4 +1,4 @@
-from spec import *
+from data.gh import *
 
 
 def Graph(*subqueries) -> str:
