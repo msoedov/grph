@@ -11,7 +11,11 @@ RANK0 = "rank0"
 
 
 def know_types(t):
-    mapping = {"String": "str", "Boolean": "bool", "Int": "int"}
+    mapping = {"String": "str", "Boolean": "bool",
+               "Int": "int", "Float": 'float'}
+    if t and '[' in t:
+        # todo: cmon
+        t = t.strip('[]')
     return mapping.get(t, t)
 
 
@@ -92,7 +96,7 @@ class Node(
     def derives(self):
         mapping = {
             "String": "str",
-            # 'Boolean': 'bool',
+            'Boolean': 'bool',
             "Int": "int",
             "ID": "str",
         }
@@ -186,9 +190,11 @@ def mutationType(s):
 
 
 def show(spec):
-    def special(x): return x["name"].startswith("__")
+    def special(x): return x["name"].startswith(
+        "__") or x['name'] in BasicTypes
 
-    variables = [t for t in spec["types"] if not special(t)]
+    variables = sorted(
+        [t for t in spec["types"] if not special(t)], key=lambda m: m['name'][0])
 
     print(render.headers(spec=variables))
     nodes = []

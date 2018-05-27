@@ -82,7 +82,7 @@ def render(node):
 
         for f in node.fields:
             b.add(
-                f'{ f.name }:{ f.etype } = {Helpers.clever_type(f.get("defaultValue"))}')
+                f'{ f.name }: { f.etype } = {Helpers.clever_type(f.get("defaultValue"))}')
         # b.endblock_if(node.fields)
 
         for f in node.input_fields:
@@ -92,7 +92,7 @@ def render(node):
                 b.add(f'{f.description}')
                 b.add('"""')
             b.add(
-                f'{ f.name }:{ f.etype } = {Helpers.clever_type(f.get("defaultValue"))}')
+                f'{ f.name }: { f.etype } = {Helpers.clever_type(f.get("defaultValue"))}')
         # b.endblock_if(node.input_fields)
         for f in node.enums:
             f = D(f)
