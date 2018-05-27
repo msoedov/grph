@@ -18,9 +18,6 @@ def serialize(obj):
     return buf
 
 
-print(serialize(OfferFilter(status=False)))
-
-
 def collect_values(hash_map):
     for k, v in hash_map.items():
         if isinstance(v, dict):
@@ -63,53 +60,13 @@ def test_query():
     query(Query.get())
 
 
-def test_segment():
-    query(Segment().get())
+# def test_segment():
+#     query(Employee().get())
 
 
-def test_offers():
-    query(Query().allOffers(filter="null"))
+# def test_offers():
+#     query(Company().get())
 
 
-def test_offers_with_filter():
-    query(Query().allOffers(filter=OfferFilter()))
-
-
-def test_offers_none():
-    query(Query().allOffers(filter=None))
-
-
-def test_company():
-    query(Query().company(id="5"))
-
-
-def test_mutation():
-    query(
-        Mutation().createUser(
-            name="Ivan",
-            password="Govnov",
-            email="null",
-            role=None,
-            picture=":",
-            active=True,
-            readonly=True,
-            emailNotification=False,
-            companyId="",
-        )
-    )
-
-
-def test_mutation_v2():
-    query(
-        Mutation().createUser(
-            name=Val("name"),
-            password=Val("password"),
-            email=Val("email"),
-            role=None,
-            picture=":",
-            active=True,
-            readonly=True,
-            emailNotification=False,
-            companyId="",
-        )
-    )
+# def test_offers_with_filter():
+#     query(Query().company(id=None))

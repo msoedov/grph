@@ -1,7 +1,15 @@
 import json
 import sys
 
-__all__ = ('define', 'node')
+__all__ = ('define', 'node', 'ID', 'sig')
+
+
+def sig(t):
+    if isinstance(t, list):
+        t = t[0]
+    if hasattr(t, 'F'):
+        return t.F()
+    return None
 
 
 def define(name, names):
@@ -12,10 +20,9 @@ def define(name, names):
         setattr(ns, name, name)
 
 
-def dumps(name, obj, level=1):
+def dumps(name, obj, level=2):
     ns = sys.modules[name]
     annot = obj.__annotations__
-    t = obj.__class__
 
     def value_helper(v):
         if isinstance(v, list):
@@ -25,13 +32,20 @@ def dumps(name, obj, level=1):
         if isinstance(v, list):
             v = v[0]
         return v
+
+    def is_annotated(_klass):
+        _klass = _klass[0] if isinstance(_klass, list) else _klass
+        if isinstance(_klass, str):
+            _klass = getattr(ns, _klass, _klass)
+        return hasattr(_klass, '__annotations__')
+
     annot = {k: value_helper(v) for k, v in annot.items()}
+    print('an', repr(annot), ns, name)
     if level <= 0:
         annot = {k: v for k, v in annot.items(
         ) if v and not hasattr(v, '__annotations__')}
-    ret = '{' + ' '.join(n + " " + dumps(name, klass, level=level-1) if hasattr(
-        klass, '__annotations__') else n
-        for n, klass in annot.items()) + '}'
+    ret = '{' + ' '.join(n + " " + dumps(name, klass, level=level-1) if is_annotated(klass) else n
+                         for n, klass in annot.items()) + '}'
     return ret
 
 
@@ -39,6 +53,10 @@ def serialize(obj):
     if not hasattr(obj, 'render'):
         return json.dumps(obj)
     vals = obj.render()
+    if not any(*vals.values()):
+        vals = obj.signature()
+        raise NameError("Watch this")
+
     buf = '{' + ', '.join([f'{n}:{serialize(v)}' for n,
                            v in vals.items()]) + '}'
     return buf
@@ -48,6 +66,7 @@ class node(object):
     def __init__(self, **kwargs):
         [setattr(self, name, kwargs.pop(name, val))
          for name, val in self.render().items()]
+        # raise NameError
 
     @classmethod
     def F(self):

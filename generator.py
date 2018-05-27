@@ -1,5 +1,6 @@
 import sys
 from collections import namedtuple
+from contextlib import contextmanager
 from jinja2 import Template
 
 
@@ -21,6 +22,29 @@ BasicTypes = set(["String", "Int", "Boolean", "Float", "ID"])
 AST = {}
 ETYPE = "etype"
 RANK0 = "rank0"
+
+
+class Buffer:
+
+    def __init__(self):
+        self._lines = []
+        self._indent = 0
+
+    def add(self, string, *args, **kwargs):
+        line = ' ' * self._indent * 4 + string.format(*args, **kwargs)
+        self._lines.append(line.rstrip(' '))
+
+    @contextmanager
+    def indent(self):
+        self._indent += 1
+        try:
+            yield
+        finally:
+            self._indent -= 1
+
+    def content(self):
+        return '\n'.join(self._lines)
+
 
 headers = Template(open("headers.jinja", "r").read())
 types_decl = Template(open("gen.jinja", "r").read())
@@ -133,6 +157,11 @@ class Node(
     def all_fields(self):
         return sorted_fields(self.fields + self.input_fields)
 
+    def all_annot_fields(self):
+        fs = [f for f in self.all_fields() if f['name'] not in set(
+            ['str', 'bool', 'int', 'float'])]
+        return fs
+
     def flatern(self, rank=-1):
         fields = self.all_fields()
 
@@ -191,16 +220,25 @@ def Methods(t):
     return methods
 
 
+def queryType(s):
+    return (s.get('queryType', {}) or {}).get('name', '')
+
+
+def mutationType(s):
+    return (s.get('mutationType', {}) or {}).get('name', '')
+
+
 def show(spec):
-    variables = [t for t in spec["types"]
-                 if not t["name"].startswith("__")]
-    print(headers.render(
-        spec=variables
-    )
-    )
+    def special(x): return x["name"].startswith("__")
+
+    variables = [t for t in spec["types"] if not special(t)]
+
+    print(headers.render(spec=variables))
     nodes = []
+    qt = queryType(spec)
+    mt = mutationType(spec)
     for thing in spec["types"]:
-        if thing["name"].startswith("__") or thing["name"] in BasicTypes:
+        if special(thing) or thing["name"] in BasicTypes:
             continue
 
         node = Node(
