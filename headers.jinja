@@ -1,3 +1,0 @@
-from core_graph import *
-
-define(__name__, [{% for t in spec %}"{{t.name}}"{% if not loop.last %}, {% endif %}{% endfor %}])

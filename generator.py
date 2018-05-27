@@ -1,36 +1,13 @@
 import sys
 from collections import namedtuple
-from contextlib import contextmanager
-from jinja2 import Template
 import render
 from attrdict import AttrDict as D
-
-
-def clever_type(a):
-    if not a:
-        return None
-
-    return f"'{a}'"
-
-
-def clever_name(a):
-    if a[0].islower():
-        return a.capitalize()
-
-    return a
 
 
 BasicTypes = set(["String", "Int", "Boolean", "Float", "ID"])
 AST = {}
 ETYPE = "etype"
 RANK0 = "rank0"
-
-
-headers = Template(open("headers.jinja", "r").read())
-types_decl = Template(open("gen.jinja", "r").read())
-
-types_decl.environment.globals["clever_type"] = clever_type
-types_decl.environment.globals["clever_name"] = clever_name
 
 
 def know_types(t):
