@@ -65,9 +65,11 @@ def serialize(obj):
 class node(object):
 
     def __init__(self, **kwargs):
+        for kname in kwargs:
+            if kname not in self.__annotations__:
+                raise NameError(f'{name} is not defined in {self}')
         [setattr(self, name, kwargs.pop(name, val))
             for name, val in self.render().items()]
-        # raise NameError
 
     @classmethod
     def F(self):
