@@ -23,6 +23,7 @@ def define(name, names):
 def dumps(name, obj, level=2):
     ns = sys.modules[name]
     annot = obj.__annotations__
+    # todo: simplify this shi
 
     def value_helper(v):
         if isinstance(v, list):
@@ -40,7 +41,6 @@ def dumps(name, obj, level=2):
         return hasattr(_klass, '__annotations__')
 
     annot = {k: value_helper(v) for k, v in annot.items()}
-    print('an', repr(annot), ns)
     if level <= 0:
         annot = {k: v for k, v in annot.items(
         ) if v and not hasattr(v, '__annotations__')}
@@ -67,7 +67,7 @@ class node(object):
     def __init__(self, **kwargs):
         for kname in kwargs:
             if kname not in self.__annotations__:
-                raise NameError(f'{name} is not defined in {self}')
+                raise NameError(f'`{kname}` is not defined in {self}')
         [setattr(self, name, kwargs.pop(name, val))
             for name, val in self.render().items()]
 
