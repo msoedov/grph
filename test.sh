@@ -9,6 +9,6 @@ black data/ph.py
 # black data/gh.py
 
 py.test -vvv -q -s . --doctest-modules
-# python test_spec.py
+python test_spec.py
 
-# py.test -vv -s gclient.py
+py.test -vv -s gclient.py

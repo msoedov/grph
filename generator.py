@@ -190,7 +190,6 @@ def show(spec):
 
     variables = [t for t in spec["types"] if not special(t)]
 
-    # print(headers.render(spec=variables))
     print(render.headers(spec=variables))
     nodes = []
     qt = queryType(spec)
@@ -211,4 +210,3 @@ def show(spec):
         AST[node.name] = node
     for node in nodes:
         print(render.render(node=node))
-        # print(types_decl.render(node=node) or '')

@@ -14,7 +14,6 @@ iso8601 = re.compile(
 
 def indentation(indent):
     return " " * 4 * indent
-    # return ""
 
 
 def List(t, indent=0):

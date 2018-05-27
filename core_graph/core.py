@@ -40,7 +40,7 @@ def dumps(name, obj, level=2):
         return hasattr(_klass, '__annotations__')
 
     annot = {k: value_helper(v) for k, v in annot.items()}
-    print('an', repr(annot), ns, name)
+    print('an', repr(annot), ns)
     if level <= 0:
         annot = {k: v for k, v in annot.items(
         ) if v and not hasattr(v, '__annotations__')}
@@ -63,23 +63,27 @@ def serialize(obj):
 
 
 class node(object):
+
     def __init__(self, **kwargs):
         [setattr(self, name, kwargs.pop(name, val))
-         for name, val in self.render().items()]
+            for name, val in self.render().items()]
         # raise NameError
 
     @classmethod
     def F(self):
-        return dumps(self.__class__.__module__, self)
+        module = self.__class__.__module__ if self.__class__.__name__ != 'type' else self.__module__
+        return dumps(module, self)
 
     @classmethod
     def get(self):
-        return self.wrap(dumps(self.__class__.__module__, self))
+        module = self.__class__.__module__ if self.__class__.__name__ != 'type' else self.__module__
+        return self.wrap(dumps(module, self))
 
     @classmethod
     def wrap(self, subquery, fn=False, **kwargs):
         if kwargs:
-            _kwargs = {name: serialize(val) for name, val in kwargs.items()}
+            _kwargs = {name: serialize(val)
+                       for name, val in kwargs.items()}
             _kwargs['ret'] = kwargs.get('ret', None)
             subquery = subquery % _kwargs
         subquery = subquery.replace('"null"', 'null')
@@ -107,10 +111,10 @@ class ID(str):
 
     """
     The `ID` scalar type represents a unique identifier, often used to
-refetch an object or as key for a cache. The ID type appears in a JSON
-response as a String; however, it is not intended to be human-readable.
-When expected as an input type, any string (such as `"4"`) or integer
-(such as `4`) input value will be accepted as an ID.
+    refetch an object or as key for a cache. The ID type appears in a JSON
+    response as a String; however, it is not intended to be human-readable.
+    When expected as an input type, any string (such as `"4"`) or integer
+    (such as `4`) input value will be accepted as an ID.
     """
 
     def render(self):
