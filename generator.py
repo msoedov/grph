@@ -2,6 +2,8 @@ import sys
 from collections import namedtuple
 from contextlib import contextmanager
 from jinja2 import Template
+import render
+from attrdict import AttrDict as D
 
 
 def clever_type(a):
@@ -22,28 +24,6 @@ BasicTypes = set(["String", "Int", "Boolean", "Float", "ID"])
 AST = {}
 ETYPE = "etype"
 RANK0 = "rank0"
-
-
-class Buffer:
-
-    def __init__(self):
-        self._lines = []
-        self._indent = 0
-
-    def add(self, string, *args, **kwargs):
-        line = ' ' * self._indent * 4 + string.format(*args, **kwargs)
-        self._lines.append(line.rstrip(' '))
-
-    @contextmanager
-    def indent(self):
-        self._indent += 1
-        try:
-            yield
-        finally:
-            self._indent -= 1
-
-    def content(self):
-        return '\n'.join(self._lines)
 
 
 headers = Template(open("headers.jinja", "r").read())
@@ -117,7 +97,7 @@ def methodF(ts):
 
 
 def sorted_fields(fs):
-    return sorted(fs, key=lambda x: x["name"])
+    return sorted(map(D, fs), key=lambda x: x["name"])
 
 
 class Node(
@@ -233,7 +213,8 @@ def show(spec):
 
     variables = [t for t in spec["types"] if not special(t)]
 
-    print(headers.render(spec=variables))
+    # print(headers.render(spec=variables))
+    print(render.headers(spec=variables))
     nodes = []
     qt = queryType(spec)
     mt = mutationType(spec)
@@ -252,4 +233,5 @@ def show(spec):
         nodes.append(node)
         AST[node.name] = node
     for node in nodes:
-        print(types_decl.render(node=node) or '')
+        print(render.render(node=node))
+        # print(types_decl.render(node=node) or '')
