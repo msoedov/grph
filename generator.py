@@ -216,3 +216,4 @@ def show(spec):
         AST[node.name] = node
     for node in nodes:
         print(render.render(node=node))
+    print(render.variables(query_type=qt, mutation_type=mt))

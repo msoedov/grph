@@ -31,7 +31,7 @@ def Val(name):
     return "?"
 
 
-def query(opt, port=9002, sufix='graphql'):
+def guery(opt, port=9002, sufix='graphql'):
     print("Query >> ", opt)
     url = f"http://localhost:{port}/{sufix}"
     json = {"query": opt}

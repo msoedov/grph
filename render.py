@@ -67,6 +67,14 @@ def headers(spec):
     return b.content()
 
 
+def variables(query_type, mutation_type):
+    b = DSL()
+    b.endblock()
+    b.add(f'query = {query_type}()')
+    b.add(f'mutation = {mutation_type}()')
+    return b.content()
+
+
 def render(node):
     b = DSL()
     b.add(f'class {node.name}({node.derives()}):')
