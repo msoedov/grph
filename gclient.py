@@ -1,9 +1,10 @@
-import requests
 import pprint
-from data.test import *
-import data.ph as ph
-
 from collections import defaultdict
+
+import requests
+
+import data.ph as ph
+from data.test import *
 
 pool = defaultdict(set)
 

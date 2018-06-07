@@ -1,7 +1,7 @@
-import requests
 import pprint
-
 from collections import defaultdict
+
+import requests
 
 pool = defaultdict(set)
 

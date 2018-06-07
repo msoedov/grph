@@ -1,11 +1,11 @@
 # trafaret reflection
+import collections
 import json
 import re
 import sys
 
 import trafaret as t
 
-import collections
 import generator
 
 iso8601 = re.compile(

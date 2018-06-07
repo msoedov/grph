@@ -1,8 +1,9 @@
 import sys
 from collections import namedtuple
-import render
+
 from attrdict import AttrDict as D
 
+import render
 
 BasicTypes = set(["String", "Int", "Boolean", "Float", "ID"])
 AST = {}

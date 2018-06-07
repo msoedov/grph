@@ -1,6 +1,7 @@
-from contextlib import contextmanager
-from attrdict import AttrDict as D
 import sys
+from contextlib import contextmanager
+
+from attrdict import AttrDict as D
 
 
 class Helpers:
