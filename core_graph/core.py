@@ -96,7 +96,10 @@ class node(object):
         return "{ " + self.__name__.lower() + subquery + "}"
 
     def __str__(self):
-        return json.dumps(self.render())
+        return "{}{}".format(self.__class__.__qualname__, json.dumps(self.render()))
+
+    def render(self):
+        raise NotImplementedError()
 
 
 def is_root(klass):
