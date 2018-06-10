@@ -140,54 +140,50 @@ class Node(
         ) + "}"
 
 
-def Fields(t):
-    fields = t["fields"]
-    if not fields:
-        return []
+class AstTransofrmer:
 
-    for f in fields:
-        f[ETYPE] = guess_type(f)
-    return sorted_fields([f for f in fields if f.get("args", []) == []])
+    def visit_fields(self, node: AST):
+        fields = node["fields"]
+        if not fields:
+            return []
 
+        for f in fields:
+            f[ETYPE] = guess_type(f)
+        return sorted_fields([f for f in fields if f.get("args", []) == []])
 
-def InputFields(t):
-    """
-    "name": "clientMutationId",
-    "description": "A unique identifier for the client performing the mutation.",
-    "type": {
-        "kind": "SCALAR",
-        "name": "String",
-        "ofType": null
-    },
-    "defaultValue": null
-    """
+    def visit_input_fields(self, node: AST):
+        """
+        "name": "clientMutationId",
+        "description": "A unique identifier for the client performing the mutation.",
+        "type": {
+            "kind": "SCALAR",
+            "name": "String",
+            "ofType": null
+        },
+        "defaultValue": null
+        """
 
-    fields = t.get("inputFields")
-    if not fields:
-        return []
+        fields = node.get("inputFields")
+        if not fields:
+            return []
+        for f in fields:
+            f[ETYPE] = guess_type(f)
+        return sorted_fields(fields)
 
-    for f in fields:
-        f[ETYPE] = guess_type(f)
-    return sorted_fields(fields)
+    def visit_enum_values(self, node: AST):
+        fields = node.get("enumValues") or []
+        return fields
 
+    def visit_methods(self, node: AST):
+        fields = node["fields"] or []
+        methods = [methodF(f) for f in fields if f.get("args")]
+        return methods
 
-def EnumValues(t):
-    fields = t.get("enumValues") or []
-    return fields
+    def queryType(self, s: AST):
+        return (s.get('queryType', {}) or {}).get('name', '')
 
-
-def Methods(t):
-    fields = t["fields"] or []
-    methods = [methodF(f) for f in fields if f.get("args")]
-    return methods
-
-
-def queryType(s):
-    return (s.get('queryType', {}) or {}).get('name', '')
-
-
-def mutationType(s):
-    return (s.get('mutationType', {}) or {}).get('name', '')
+    def mutationType(self, s: AST):
+        return (s.get('mutationType', {}) or {}).get('name', '')
 
 
 def show(spec):
@@ -197,10 +193,11 @@ def show(spec):
     variables = sorted(
         [t for t in spec["types"] if not special(t)], key=lambda m: m['name'][0])
 
+    transformer = AstTransofrmer()
     print(render.headers(spec=variables))
     nodes = []
-    qt = queryType(spec)
-    mt = mutationType(spec)
+    qt = transformer.queryType(spec)
+    mt = transformer.mutationType(spec)
     for thing in spec["types"]:
         if special(thing) or thing["name"] in BasicTypes:
             continue
@@ -208,10 +205,10 @@ def show(spec):
         node = Node(
             name=thing["name"],
             description=thing["description"],
-            fields=Fields(thing),
-            methods=Methods(thing),
-            input_fields=InputFields(thing),
-            enums=EnumValues(thing),
+            fields=transformer.visit_fields(thing),
+            methods=transformer.visit_methods(thing),
+            input_fields=transformer.visit_input_fields(thing),
+            enums=transformer.visit_enum_values(thing),
         )
         nodes.append(node)
         AST[node.name] = node
