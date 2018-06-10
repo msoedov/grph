@@ -1,6 +1,6 @@
 import sys
 import json
-from .lib import show
+from grph.lib import show
 
 
 def resolve(json_raw):
