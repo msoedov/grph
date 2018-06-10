@@ -14,7 +14,6 @@ class Helpers:
     def clever_type(self, a):
         if not a:
             return None
-
         return f"'{a}'"
 
     @classmethod
@@ -56,7 +55,7 @@ class DSL:
 
 def headers(spec):
     b = DSL()
-    b.add(f'from core_graph import *')
+    b.add(f'from grph.util import *')
     b.endblock()
     b.add(f'define(__name__, [')
     with b.indent():

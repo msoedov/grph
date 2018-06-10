@@ -2,8 +2,7 @@ import sys
 from collections import namedtuple
 
 from attrdict import AttrDict as D
-
-import render
+import grph.code as code
 
 BasicTypes = set(["String", "Int", "Boolean", "Float", "ID"])
 AST = {}
@@ -194,7 +193,7 @@ def show(spec):
         [t for t in spec["types"] if not special(t)], key=lambda m: m['name'][0])
 
     transformer = AstTransofrmer()
-    print(render.headers(spec=variables))
+    print(code.headers(spec=variables))
     nodes = []
     qt = transformer.queryType(spec)
     mt = transformer.mutationType(spec)
@@ -213,5 +212,5 @@ def show(spec):
         nodes.append(node)
         AST[node.name] = node
     for node in nodes:
-        print(render.render(node=node))
-    print(render.variables(query_type=qt, mutation_type=mt))
+        print(code.render(node=node))
+    print(code.variables(query_type=qt, mutation_type=mt))
