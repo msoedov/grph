@@ -63,4 +63,4 @@ spec.py
 .pytest_cache/
 __pycache__/
 data/
-.mypy_cache
+.mypy_cache/
