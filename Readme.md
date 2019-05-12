@@ -8,7 +8,7 @@ Generate a python client code from graphql spec. It allows clients to define the
 python -m grph examples/github.json > examples/github_lib.py
 ```
 
-Sample of generated code
+### Sample of generated code
 
 ```python
 class Repository(node):
@@ -76,7 +76,7 @@ class Query(Node):
 
 ```
 
-Sample of request
+### Sample of request
 
 ```python
 from grph.http import guery
